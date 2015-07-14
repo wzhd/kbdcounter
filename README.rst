@@ -12,17 +12,7 @@ line is added to the file.
 Installation
 ------------
 
-Run bootstrap, then buildout. This will retrieve the dependencies of
-the project (python-xlib), or use an existing one if you have it
-installed already (i.e. via *apt-get install python-xlib*) and
-generate the binary.
-
-::
-
-   python bootstrap.py
-   bin/buildout
-
-Run *bin/kbdcounter*. After 5 minutes, verify that it's working by
+Run *src/kbdcounter.py*. After 5 minutes, verify that it's working by
 inspecting ~/.kbdcounter.csv.
 
 The program should be started automatically when your desktop session
