@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from optparse import OptionParser
 import csv
 from xlib import XEvents
-
+from ast import literal_eval
 
 
 class KbdCounter(object):
@@ -20,7 +20,7 @@ class KbdCounter(object):
     def set_thishour(self):
         self.thishour = datetime.now().replace(minute=0, second=0, microsecond=0)
         self.nexthour = self.thishour + timedelta(hours=1)
-        self.thishour_count = 0
+        self.thishour_count = {}
 
     def set_nextsave(self):
         now = time.time()
@@ -32,13 +32,13 @@ class KbdCounter(object):
             thishour_repr = self.thishour.strftime("%Y-%m-%dT%H")
             for (hour, value) in csv.reader(open(self.storepath)):
                 if hour == thishour_repr:
-                    self.thishour_count = int(value)
+                    self.thishour_count = literal_eval(value)
                     break
         
 
     def save(self):
         self.set_nextsave()        
-        if self.thishour_count == 0:
+        if len(self.thishour_count) == 0:
             return 
         
         tmpout = csv.writer(open("%s.tmp" % self.storepath, 'w'))
@@ -49,7 +49,7 @@ class KbdCounter(object):
                 if hour != thishour_repr:
                     tmpout.writerow([hour, value])
 
-        tmpout.writerow([thishour_repr, self.thishour_count])
+        tmpout.writerow([thishour_repr, repr(self.thishour_count)])
         os.rename("%s.tmp" % self.storepath, self.storepath)
 
 
@@ -70,7 +70,8 @@ class KbdCounter(object):
                 if evt.type != "EV_KEY" or evt.value != 1: # Only count key down, not up.
                     continue
 
-                self.thishour_count+=1
+                self.thishour_count.setdefault(evt.get_code(), 0)
+                self.thishour_count[evt.get_code()] += 1
             
                 if time.time() > self.nextsave:
                     self.save()
