@@ -85,7 +85,7 @@ class KbdCounter(object):
             
                     
 
-def run():
+if __name__ == '__main__':
     oparser = OptionParser()
     oparser.add_option("--storepath", dest="storepath",
                        help="Filename into which number of keypresses per hour is written",
