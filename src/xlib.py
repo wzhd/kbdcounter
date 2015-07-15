@@ -82,6 +82,11 @@ class XEvents(threading.Thread):
     self.keycode_to_symbol = collections.defaultdict(lambda: 'KEY_DUNNO')
     self._setup_lookup()
     self.events = []  # each of type XEvent
+    # When there are new events, optionally call a function
+    self.new_event_callback = None
+
+  def set_callback(self, callback):
+    self.new_event_callback = callback
 
   def run(self):
     """Standard run method for threading."""
@@ -181,6 +186,8 @@ class XEvents(threading.Thread):
         self._handle_mouse(event, 2)
       else:
         print(event)
+    if self.new_event_callback:
+      self.new_event_callback()
 
   def _handle_mouse(self, event, value):
     """Add a mouse event to events.

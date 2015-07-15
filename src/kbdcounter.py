@@ -61,40 +61,43 @@ class KbdCounter(object):
         os.rename("%s.tmp" % self.storepath, self.storepath)
 
 
+    def event_handler(self):
+        evt = self.events.next_event()
+        while(evt):
+            if evt.type != "EV_KEY" or evt.value != 1: # Only count key down, not up.
+                evt = self.events.next_event()
+                continue
+
+            while Gtk.events_pending():
+                # Without this, get_active_window() returns outdated information
+                Gtk.main_iteration()
+            self.cur_win = self.screen.get_active_window().get_class_group_name()
+
+            self.thishour_count.setdefault(self.cur_win, {})
+            self.thishour_count[self.cur_win].setdefault(evt.get_code(), 0)
+            self.thishour_count[self.cur_win][evt.get_code()] += 1
+
+            if time.time() > self.nextsave:
+                self.save()
+
+                if datetime.now().hour != self.thishour.hour:
+                    self.set_thishour()
+
+            evt = self.events.next_event()
+
     def run(self):
-        events = XEvents()
-        events.start()
-        while not events.listening():
+        self.events = XEvents()
+        self.events.set_callback(self.event_handler)
+        self.events.start()
+        while not self.events.listening():
             # Wait for init
             time.sleep(1)
-
         try:
-            while events.listening():
-                evt = events.next_event()
-                if not evt:
-                    time.sleep(0.5)
-                    continue
-                
-                if evt.type != "EV_KEY" or evt.value != 1: # Only count key down, not up.
-                    continue
-
-                while Gtk.events_pending():
-                    # Without this, get_active_window() returns outdated information
-                    Gtk.main_iteration()
-                self.cur_win = self.screen.get_active_window().get_class_group_name()
-
-                self.thishour_count.setdefault(self.cur_win, {})
-                self.thishour_count[self.cur_win].setdefault(evt.get_code(), 0)
-                self.thishour_count[self.cur_win][evt.get_code()] += 1
-            
-                if time.time() > self.nextsave:
-                    self.save()
-            
-                    if datetime.now().hour != self.thishour.hour:
-                        self.set_thishour()
-            
+            # Keep the program from exiting
+            while True:
+                time.sleep(100)
         except KeyboardInterrupt:
-            events.stop_listening()
+            self.events.stop_listening()
             self.save()
 
             
