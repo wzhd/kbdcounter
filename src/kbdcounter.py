@@ -7,6 +7,7 @@ from optparse import OptionParser
 import csv
 from xlib import XEvents
 from ast import literal_eval
+from gi.repository import Gtk, Wnck
 
 
 class KbdCounter(object):
@@ -16,6 +17,13 @@ class KbdCounter(object):
         self.set_thishour()
         self.set_nextsave()
         self.read_existing()
+
+        Gtk.init([])  # necessary if not using a Gtk.main() loop
+        self.screen = Wnck.Screen.get_default()
+        self.screen.force_update()  # recommended per Wnck documentation
+        while Gtk.events_pending():  # This is required to capture all existing events
+            Gtk.main_iteration()
+        self.cur_win = self.screen.get_active_window().get_class_group_name()
 
     def set_thishour(self):
         self.thishour = datetime.now().replace(minute=0, second=0, microsecond=0)
@@ -70,8 +78,14 @@ class KbdCounter(object):
                 if evt.type != "EV_KEY" or evt.value != 1: # Only count key down, not up.
                     continue
 
-                self.thishour_count.setdefault(evt.get_code(), 0)
-                self.thishour_count[evt.get_code()] += 1
+                while Gtk.events_pending():
+                    # Without this, get_active_window() returns outdated information
+                    Gtk.main_iteration()
+                self.cur_win = self.screen.get_active_window().get_class_group_name()
+
+                self.thishour_count.setdefault(self.cur_win, {})
+                self.thishour_count[self.cur_win].setdefault(evt.get_code(), 0)
+                self.thishour_count[self.cur_win][evt.get_code()] += 1
             
                 if time.time() > self.nextsave:
                     self.save()
