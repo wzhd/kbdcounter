@@ -8,11 +8,15 @@ import csv
 from xlib import XEvents
 from ast import literal_eval
 from gi.repository import Gtk, Wnck
+import sqlite3
 
 
 class KbdCounter(object):
     def __init__(self, options):
         self.storepath=os.path.expanduser(options.storepath)
+        conn = sqlite3.connect(self.storepath)
+        self.dbcursor = conn.cursor()
+        self.initialise_database()
 
         self.set_thishour()
         self.set_nextsave()
@@ -25,6 +29,10 @@ class KbdCounter(object):
             Gtk.main_iteration()
         self.cur_win = self.screen.get_active_window().get_class_group_name()
 
+    def initialise_database(self):
+        self.dbcursor.execute('create table if not exists record \
+                               (time text, app_name text, key_name text, count int, \
+                               primary key (time, app_name, key_name))')
     def set_thishour(self):
         self.thishour = datetime.now().replace(minute=0, second=0, microsecond=0)
         self.nexthour = self.thishour + timedelta(hours=1)
@@ -35,31 +43,22 @@ class KbdCounter(object):
         self.nextsave = now + min((self.nexthour - datetime.now()).seconds+1, 300)
 
     def read_existing(self):
-
-        if os.path.exists(self.storepath):
-            thishour_repr = self.thishour.strftime("%Y-%m-%dT%H")
-            for (hour, value) in csv.reader(open(self.storepath)):
-                if hour == thishour_repr:
-                    self.thishour_count = literal_eval(value)
-                    break
-        
+        thishour_repr = self.thishour.strftime("%Y-%m-%dT%H")
+        thishour_record = self.dbcursor.execute('select app_name,key_name,count \
+                                                from record where time=?', (thishour_repr, ))
+        for rec in thishour_record:
+            self.thishour_count[rec[0]] = {}
+            self.thishour_count[rec[0]][rec[1]] == rec[2]
 
     def save(self):
-        self.set_nextsave()        
-        if len(self.thishour_count) == 0:
-            return 
-        
-        tmpout = csv.writer(open("%s.tmp" % self.storepath, 'w'))
-        thishour_repr = self.thishour.strftime("%Y-%m-%dT%H")        
-
-        if os.path.exists(self.storepath):
-            for (hour, value) in csv.reader(open(self.storepath)):
-                if hour != thishour_repr:
-                    tmpout.writerow([hour, value])
-
-        tmpout.writerow([thishour_repr, repr(self.thishour_count)])
-        os.rename("%s.tmp" % self.storepath, self.storepath)
-
+        self.set_nextsave()
+        for app in self.thishour_count:
+            for key in self.thishour_count[app]:
+                self.dbcursor.execute('insert into record \
+                                      (time,app_name,key_name,count) values \
+                                      (?,?,?,?)', \
+                                      (self.thishour.strftime("%Y-%m-%dT%H"),
+                                      app, key, self.thishour_count[app][key]))
 
     def event_handler(self):
         evt = self.events.next_event()
@@ -107,7 +106,7 @@ if __name__ == '__main__':
     oparser = OptionParser()
     oparser.add_option("--storepath", dest="storepath",
                        help="Filename into which number of keypresses per hour is written",
-                       default="~/.kbdcounter.csv")
+                       default="~/.kbdcounter.db")
 
     (options, args) = oparser.parse_args()
     
