@@ -26,9 +26,9 @@ class KbdCounter(object):
         Gtk.init([])  # necessary if not using a Gtk.main() loop
         self.screen = Wnck.Screen.get_default()
         self.screen.force_update()  # recommended per Wnck documentation
-        while Gtk.events_pending():  # This is required to capture all existing events
-            Gtk.main_iteration()
-        self.cur_win = self.screen.get_active_window().get_class_group_name()
+
+        self.cur_win = 'Unknown window'
+        self.set_current_window()
 
     def initialise_database(self):
         self.dbcursor.execute('create table if not exists record \
@@ -62,6 +62,15 @@ class KbdCounter(object):
                                       app, key, self.thishour_count[app][key]))
         self.conn.commit()
 
+    def set_current_window(self):
+        while Gtk.events_pending():
+            # Without this, get_active_window() returns outdated information
+            Gtk.main_iteration()
+        window = self.screen.get_active_window()
+        if window:
+            # when switching windows, get_active_window() sometimes returns None
+            self.cur_win = window.get_class_group_name()
+
     def event_handler(self):
         evt = self.events.next_event()
         while(evt):
@@ -69,10 +78,7 @@ class KbdCounter(object):
                 evt = self.events.next_event()
                 continue
 
-            while Gtk.events_pending():
-                # Without this, get_active_window() returns outdated information
-                Gtk.main_iteration()
-            self.cur_win = self.screen.get_active_window().get_class_group_name()
+            self.set_current_window()
 
             self.thishour_count.setdefault(self.cur_win, {})
             self.thishour_count[self.cur_win].setdefault(evt.get_code(), 0)
