@@ -85,8 +85,8 @@ class XEvents(threading.Thread):
     # When there are new events, optionally call a function
     self.new_event_callback = None
 
-  def set_callback(self, callback):
-    self.new_event_callback = callback
+  def set_event(self, event):
+    self.input_event = event
 
   def run(self):
     """Standard run method for threading."""
@@ -186,8 +186,8 @@ class XEvents(threading.Thread):
         self._handle_mouse(event, 2)
       else:
         print(event)
-    if self.new_event_callback:
-      self.new_event_callback()
+    if self.input_event:
+      self.input_event.set()
 
   def _handle_mouse(self, event, value):
     """Add a mouse event to events.

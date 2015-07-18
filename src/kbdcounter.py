@@ -2,6 +2,7 @@
 
 import os
 import time
+import threading
 from datetime import datetime, timedelta
 from optparse import OptionParser
 import csv
@@ -87,15 +88,17 @@ class KbdCounter(object):
 
     def run(self):
         self.events = XEvents()
-        self.events.set_callback(self.event_handler)
+        event_ready = threading.Event()
+        self.events.set_event(event_ready)
         self.events.start()
         while not self.events.listening():
             # Wait for init
             time.sleep(1)
         try:
-            # Keep the program from exiting
             while True:
-                time.sleep(100)
+                self.event_handler()
+                event_ready.clear()
+                event_ready.wait()
         except KeyboardInterrupt:
             self.events.stop_listening()
             self.save()
