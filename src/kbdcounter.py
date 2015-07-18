@@ -15,8 +15,8 @@ import sqlite3
 class KbdCounter(object):
     def __init__(self, options):
         self.storepath=os.path.expanduser(options.storepath)
-        conn = sqlite3.connect(self.storepath)
-        self.dbcursor = conn.cursor()
+        self.conn = sqlite3.connect(self.storepath)
+        self.dbcursor = self.conn.cursor()
         self.initialise_database()
 
         self.set_thishour()
@@ -49,17 +49,18 @@ class KbdCounter(object):
                                                 from record where time=?', (thishour_repr, ))
         for rec in thishour_record:
             self.thishour_count[rec[0]] = {}
-            self.thishour_count[rec[0]][rec[1]] == rec[2]
+            self.thishour_count[rec[0]][rec[1]] = rec[2]
 
     def save(self):
         self.set_nextsave()
         for app in self.thishour_count:
             for key in self.thishour_count[app]:
-                self.dbcursor.execute('insert into record \
+                self.dbcursor.execute('insert or replace into record \
                                       (time,app_name,key_name,count) values \
                                       (?,?,?,?)', \
                                       (self.thishour.strftime("%Y-%m-%dT%H"),
                                       app, key, self.thishour_count[app][key]))
+        self.conn.commit()
 
     def event_handler(self):
         evt = self.events.next_event()
