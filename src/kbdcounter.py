@@ -10,7 +10,7 @@ from xlib import XEvents
 from ast import literal_eval
 from gi.repository import Gtk, Wnck
 import sqlite3
-from record import Record
+from record import *
 
 class KbdCounter(object):
     def __init__(self, options):
@@ -63,7 +63,7 @@ class KbdCounter(object):
             self.set_current_window()
 
             record = Record()
-            record.time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
+            record.time = datetime.now().strftime(timeformat)
             record.app_name = self.cur_win
             record.code = evt.get_code()
             record.scancode = evt.get_scancode()
@@ -72,7 +72,6 @@ class KbdCounter(object):
 
             if (datetime.now() - self.lastsave).total_seconds() > 60:
                 self.save()
-                print("saved")
 
             evt = self.events.next_event()
 
