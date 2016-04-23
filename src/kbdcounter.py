@@ -10,15 +10,7 @@ from xlib import XEvents
 from ast import literal_eval
 from gi.repository import Gtk, Wnck
 import sqlite3
-
-class Record(object):
-
-    def __init__(self):
-        self.time = None
-        self.app_name = None
-        self.code = None
-        self.scancode = None
-        self.value = None
+from record import Record
 
 class KbdCounter(object):
     def __init__(self, options):
