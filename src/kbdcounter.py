@@ -11,6 +11,14 @@ from ast import literal_eval
 from gi.repository import Gtk, Wnck
 import sqlite3
 
+class Record(object):
+
+    def __init__(self):
+        self.time = None
+        self.app_name = None
+        self.code = None
+        self.scancode = None
+        self.value = None
 
 class KbdCounter(object):
     def __init__(self, options):
@@ -19,9 +27,8 @@ class KbdCounter(object):
         self.dbcursor = self.conn.cursor()
         self.initialise_database()
 
-        self.set_thishour()
-        self.set_nextsave()
-        self.read_existing()
+        self.records = []
+        self.lastsave = datetime.now()
 
         Gtk.init([])  # necessary if not using a Gtk.main() loop
         self.screen = Wnck.Screen.get_default()
@@ -32,34 +39,17 @@ class KbdCounter(object):
 
     def initialise_database(self):
         self.dbcursor.execute('create table if not exists record \
-                               (time text, app_name text, key_name text, count int, \
-                               primary key (time, app_name, key_name))')
-    def set_thishour(self):
-        self.thishour = datetime.now()
-        self.nexthour = self.thishour + timedelta(hours=1)
-        self.thishour_count = {}
-
-    def set_nextsave(self):
-        now = time.time()
-        self.nextsave = now + min((self.nexthour - datetime.now()).seconds+1, 300)
-
-    def read_existing(self):
-        thishour_repr = self.thishour.strftime("%Y-%m-%dT%H:%M:%S.%f")
-        thishour_record = self.dbcursor.execute('select app_name,key_name,count \
-                                                from record where time=?', (thishour_repr, ))
-        for rec in thishour_record:
-            self.thishour_count[rec[0]] = {}
-            self.thishour_count[rec[0]][rec[1]] = rec[2]
+                               (time text, app_name text, code text, scancode text, value text)')
 
     def save(self):
-        self.set_nextsave()
-        for app in self.thishour_count:
-            for key in self.thishour_count[app]:
-                self.dbcursor.execute('insert or replace into record \
-                                      (time,app_name,key_name,count) values \
-                                      (?,?,?,?)', \
-                                      (self.thishour.strftime("%Y-%m-%dT%H:%M:%S.%f"),
-                                      app, key, self.thishour_count[app][key]))
+        # self.set_nextsave()
+        for record in self.records:
+            self.dbcursor.execute('insert into record \
+                                  (time,app_name,code,scancode,value) values \
+                                  (?,?,?,?,?)', \
+                                  (record.time, record.app_name, record.code, record.scancode, record.value))
+        self.records = []
+        self.lastsave = datetime.now()
         self.conn.commit()
 
     def set_current_window(self):
@@ -74,21 +64,23 @@ class KbdCounter(object):
     def event_handler(self):
         evt = self.events.next_event()
         while(evt):
-            if evt.type != "EV_KEY" or evt.value != 1: # Only count key down, not up.
+            if evt.type != "EV_KEY": # Only count key down, not up.
                 evt = self.events.next_event()
                 continue
 
             self.set_current_window()
 
-            self.thishour_count.setdefault(self.cur_win, {})
-            self.thishour_count[self.cur_win].setdefault(evt.get_code(), 0)
-            self.thishour_count[self.cur_win][evt.get_code()] += 1
+            record = Record()
+            record.time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
+            record.app_name = self.cur_win
+            record.code = evt.get_code()
+            record.scancode = evt.get_scancode()
+            record.value = evt.get_value()
+            self.records.append(record)
 
-            if time.time() > self.nextsave:
+            if (datetime.now() - self.lastsave).total_seconds() > 60:
                 self.save()
-
-                if datetime.now().hour != self.thishour.hour:
-                    self.set_thishour()
+                print("saved")
 
             evt = self.events.next_event()
 
