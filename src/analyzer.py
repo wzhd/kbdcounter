@@ -11,10 +11,9 @@ from record import *
 
 class KbdAnalyzer(object):
     def __init__(self, options):
-        self.storepath=os.path.expanduser(options.storepath)
-        self.conn = sqlite3.connect(self.storepath)
+        self.options = options
+        self.conn = sqlite3.connect(os.path.expanduser(options.storepath))
         self.dbcursor = self.conn.cursor()
-
         self.records = []
 
     def read_existing(self):
@@ -63,6 +62,16 @@ class KbdAnalyzer(object):
         print("combined")
         sortedCombinedCount = sorted(combinedCount.items(), key=lambda kv: kv[1])
         for item in sortedCombinedCount:
+            if(len(item[0]) == 1): continue
+            if(self.options.letterCombination == False):
+                isLetterCombination = True
+                for i in item[0]:
+                    if(len(i) > 5):
+                        isLetterCombination = False
+                        break
+                if(isLetterCombination):
+                    continue
+
             print("\t" + str(item[0]) + ": " + str(combinedCount[item[0]]))
 
     def run(self):
@@ -74,6 +83,11 @@ if __name__ == '__main__':
     oparser.add_option("--storepath", dest="storepath",
                        help="Filename into which number of keypresses per hour is written",
                        default="~/.kbdcounter.db")
+
+    oparser.add_option("--letter-combination", dest="letterCombination",
+                       help="Whether simultaneously pressed letters will be treated as combination",
+                       default=False)
+
 
     (options, args) = oparser.parse_args()
 
