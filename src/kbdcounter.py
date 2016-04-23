@@ -35,7 +35,7 @@ class KbdCounter(object):
                                (time text, app_name text, key_name text, count int, \
                                primary key (time, app_name, key_name))')
     def set_thishour(self):
-        self.thishour = datetime.now().replace(minute=0, second=0, microsecond=0)
+        self.thishour = datetime.now()
         self.nexthour = self.thishour + timedelta(hours=1)
         self.thishour_count = {}
 
@@ -44,7 +44,7 @@ class KbdCounter(object):
         self.nextsave = now + min((self.nexthour - datetime.now()).seconds+1, 300)
 
     def read_existing(self):
-        thishour_repr = self.thishour.strftime("%Y-%m-%dT%H")
+        thishour_repr = self.thishour.strftime("%Y-%m-%dT%H:%M:%S.%f")
         thishour_record = self.dbcursor.execute('select app_name,key_name,count \
                                                 from record where time=?', (thishour_repr, ))
         for rec in thishour_record:
@@ -58,7 +58,7 @@ class KbdCounter(object):
                 self.dbcursor.execute('insert or replace into record \
                                       (time,app_name,key_name,count) values \
                                       (?,?,?,?)', \
-                                      (self.thishour.strftime("%Y-%m-%dT%H"),
+                                      (self.thishour.strftime("%Y-%m-%dT%H:%M:%S.%f"),
                                       app, key, self.thishour_count[app][key]))
         self.conn.commit()
 
@@ -109,8 +109,8 @@ class KbdCounter(object):
             self.events.stop_listening()
             self.save()
 
-            
-                    
+
+
 
 if __name__ == '__main__':
     oparser = OptionParser()
@@ -119,14 +119,14 @@ if __name__ == '__main__':
                        default="~/.kbdcounter.db")
 
     (options, args) = oparser.parse_args()
-    
+
     kc = KbdCounter(options)
     kc.run()
 
-    
 
-    
 
-    
-    
-    
+
+
+
+
+
