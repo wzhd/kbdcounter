@@ -25,25 +25,18 @@ or a combined mode (counting how often combinations of keys occur).
 The combined mode hides letter-only-combinations per default.
 Here an example output:
 
-
-    single
-        KEY_RETURN: 363
-
-        KEY_D: 392
-
-        KEY_ISO_LEVEL3_SHIFT: 448
-
-        KEY_E: 450
-
-    combined
-        ('KEY_T', 'KEY_SPACE'): 12
-
-        ('KEY_SUPER_L', 'KEY_SHIFT_L'): 12
-
-        ('KEY_SPACE', 'KEY_F'): 13
-
-        ('KEY_ISO_LEVEL3_SHIFT', 'KEY_SPACE'): 19
-
+```
+single
+	KEY_RETURN: 363
+	KEY_D: 392
+	KEY_ISO_LEVEL3_SHIFT: 448
+	KEY_E: 450
+combined
+	('KEY_T', 'KEY_SPACE'): 12
+	('KEY_SUPER_L', 'KEY_SHIFT_L'): 12
+	('KEY_SPACE', 'KEY_F'): 13
+	('KEY_ISO_LEVEL3_SHIFT', 'KEY_SPACE'): 19
+```
 
 Known bugs
 ----------
