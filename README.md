@@ -9,6 +9,9 @@ It will store the log in a SQLite database, by default ~/.kbdcounter.db.
 Installation
 ------------
 
+Required packages, they might have a different name on your system (python should work, too):
+- python3-xlib
+
 Run *src/kbdcounter.py*. After 1 minute, verify that it's working by
 inspecting ~/.kbdcounter.db (e.g. with sqlitebrowser).
 

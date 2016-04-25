@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 timeformat = "%Y-%m-%dT%H:%M:%S.%f"
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 from datetime import datetime, timedelta
@@ -54,11 +54,6 @@ class KbdAnalyzer(object):
                 if len(keyToTime) > 0:
                     combinedCount[tuple(keyToTime.keys())] += 1
 
-        print("single")
-        sortedSingleCount = sorted(singleCount.items(), key=lambda kv: kv[1])
-        for item in sortedSingleCount:
-            print("\t" + str(item[0]) + ": " + str(singleCount[item[0]]))
-
         print("combined")
         sortedCombinedCount = sorted(combinedCount.items(), key=lambda kv: kv[1])
         for item in sortedCombinedCount:
@@ -73,6 +68,12 @@ class KbdAnalyzer(object):
                     continue
 
             print("\t" + str(item[0]) + ": " + str(combinedCount[item[0]]))
+
+        print("single")
+        sortedSingleCount = sorted(singleCount.items(), key=lambda kv: kv[1])
+        for item in sortedSingleCount:
+            print("\t" + str(item[0]) + ": " + str(singleCount[item[0]]))
+
 
     def run(self):
         self.read_existing()
